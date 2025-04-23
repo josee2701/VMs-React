@@ -12,10 +12,11 @@ export default function Login() {
     try {
       const response = await api.post('/login', { email, password });
       console.log('Respuesta de la API:', response.data);
-      // guarda tu token aquí si lo necesitas
-      // por ejemplo: localStorage.setItem('token', response.data.token);
-      // luego redirige a la página principal de tu app:
-      // navigate('/dashboard');
+      // 1 Extrae y guarda el JWT en localStorage
+      const { access_token } = response.data;
+      localStorage.setItem('jwt', access_token);;
+      // 2️⃣ Redirigimos a /vms
+      navigate('/vms', { replace: true });
     } catch (err) {
       console.error('Error al hacer login:', err.response || err);
       alert('Credenciales incorrectas');
