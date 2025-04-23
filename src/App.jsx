@@ -5,6 +5,9 @@ import {
   BrowserRouter as Router,
   Routes
 } from 'react-router-dom';
+import CreateVm from './components/CreateVm';
+import EditVm from './components/EditVm';
+import VmsList from './components/ListVms';
 import Login from './components/Login';
 import Register from './components/Register';
 
@@ -15,6 +18,9 @@ export default function App() {
         {/* Define /login y /register */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/vms"      element={<VmsList />} />
+        <Route path="/vms/create" element={<CreateVm />} />
+        <Route path="/vms/:id/edit" element={<EditVm />} />
 
         {/* Redirige la raíz al login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
