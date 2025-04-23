@@ -12,6 +12,8 @@ import VmsList from './components/ListVms';
 import Login from './components/Login';
 import Register from './components/Register';
 import UsersList from './components/UsersList';
+import ViewVm from './components/ViewVms';
+
 
 export default function App() {
   return (
@@ -23,8 +25,12 @@ export default function App() {
         <Route path="/vms"      element={<VmsList />} />
         <Route path="/vms/create" element={<CreateVm />} />
         <Route path="/vms/:id/edit" element={<EditVm />} />
+        <Route path="/vms/:id"           element={<ViewVm />} />
+
+        {/* Define /users */}
         <Route path="/users" element={<UsersList />} />
         <Route path="/users/:id/edit" element={<EditUser />} />
+
 
         {/* Redirige la raíz al login */}
         <Route path="/" element={<Navigate to="/login" replace />} />

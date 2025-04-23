@@ -5,41 +5,35 @@ import api from '../apis.jsx';
 import { parseJwt } from '../utils/jwt';
 
 export default function VmsList() {
-  const [vms, setVms] = useState([]);
+  const [vms, setVms]       = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError]     = useState(null);
   const navigate = useNavigate();
 
-  // Decodifica el token para extraer el rol
-  const token = localStorage.getItem('jwt') || '';
+  const token   = localStorage.getItem('jwt') || '';
   const payload = parseJwt(token);
-  const rol = payload.rol || payload.role;
+  const rol     = payload.rol || payload.role;
 
-  // Función para borrar una VM
   const handleDelete = async id => {
-    if (!window.confirm(`¿Seguro que quieres eliminar la VM #${id}?`)) return;
+    if (!window.confirm(`¿Eliminar VM #${id}?`)) return;
     try {
       await api.delete(`/vms/${id}`);
-      // Actualiza el listado filtrando la VM eliminada
       setVms(prev => prev.filter(vm => vm.id !== id));
       alert('VM eliminada correctamente');
     } catch (err) {
-      console.error('Error al eliminar VM:', err.response || err);
-      alert(
-        err.response?.data?.message ||
-        'Ocurrió un error al eliminar la VM.'
-      );
+      console.error(err);
+      alert(err.response?.data?.message || 'Error al eliminar VM.');
     }
   };
 
   useEffect(() => {
-    const fetchVms = async () => {
+    (async () => {
       try {
         const { data } = await api.get('/vms');
         setVms(data);
       } catch (err) {
         if (err.response?.status === 401) {
-          localStorage.removeItem('jwt');
+          localStorage.clear();
           navigate('/login', { replace: true });
         } else {
           setError(err.message);
@@ -47,12 +41,11 @@ export default function VmsList() {
       } finally {
         setLoading(false);
       }
-    };
-    fetchVms();
+    })();
   }, [navigate]);
 
   if (loading) return <p>Cargando VMs…</p>;
-  if (error)   return <p>Error al cargar: {error}</p>;
+  if (error)   return <p>Error: {error}</p>;
 
   return (
     <div style={{ padding: '1rem' }}>
@@ -63,40 +56,18 @@ export default function VmsList() {
         marginBottom: '1rem'
       }}>
         <h2>Lista de VMs</h2>
-
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {/* Botón "Usuarios" solo para administradores */}
           {rol === 'administrador' && (
-            <button
-              onClick={() => navigate('/users')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#17a2b8',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Usuarios
-            </button>
-          )}
-
-          {/* Botón "Crear VM" solo para administradores */}
-          {rol === 'administrador' && (
-            <button
-              onClick={() => navigate('/vms/create')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#28a745',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Crear VM
-            </button>
+            <>
+              <button
+                onClick={() => navigate('/users')}
+                style={btnInfo}
+              >Usuarios</button>
+              <button
+                onClick={() => navigate('/vms/create')}
+                style={btnSuccess}
+              >Crear VM</button>
+            </>
           )}
         </div>
       </div>
@@ -107,7 +78,7 @@ export default function VmsList() {
             <th style={th}>ID</th>
             <th style={th}>Nombre</th>
             <th style={th}>Estado</th>
-            {rol === 'administrador' && <th style={th}>Acciones</th>}
+            <th style={th}>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -116,22 +87,27 @@ export default function VmsList() {
               <td style={td}>{vm.id}</td>
               <td style={td}>{vm.name}</td>
               <td style={td}>{vm.status}</td>
-              {rol === 'administrador' && (
-                <td style={td}>
-                  <button
-                    onClick={() => navigate(`/vms/${vm.id}/edit`)}
-                    style={{ marginRight: '0.5rem' }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(vm.id)}
-                    style={{ color: '#dc3545' }}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              )}
+              <td style={td}>
+                {/* Ver: disponible para todos */}
+                <button
+                  onClick={() => navigate(`/vms/${vm.id}`)}
+                  style={btnPrimary}
+                >Ver</button>
+
+                {/* Solo admin: Editar / Eliminar */}
+                {rol === 'administrador' && (
+                  <>
+                    <button
+                      onClick={() => navigate(`/vms/${vm.id}/edit`)}
+                      style={{ ...btnPrimary, marginLeft: '0.5rem' }}
+                    >Editar</button>
+                    <button
+                      onClick={() => handleDelete(vm.id)}
+                      style={{ ...btnDanger, marginLeft: '0.5rem' }}
+                    >Eliminar</button>
+                  </>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -149,4 +125,24 @@ const th = {
 const td = {
   border: '1px solid #ddd',
   padding: '8px'
+};
+const btnPrimary = {
+  padding: '0.25rem 0.5rem',
+  backgroundColor: '#007BFF',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '4px',
+  cursor: 'pointer'
+};
+const btnSuccess = {
+  ...btnPrimary,
+  backgroundColor: '#28a745'
+};
+const btnDanger = {
+  ...btnPrimary,
+  backgroundColor: '#dc3545'
+};
+const btnInfo = {
+  ...btnPrimary,
+  backgroundColor: '#17a2b8'
 };
