@@ -6,17 +6,22 @@ import {
   Routes
 } from 'react-router-dom';
 import Login from './components/Login';
+import Register from './components/Register';
 
 export default function App() {
   return (
-    
-      <Router>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          {/* para cualquier otra ruta, redirige a /login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
-  
+    <Router>
+      <Routes>
+        {/* Define /login y /register */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Redirige la raíz al login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Cualquier otra, también a login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
   );
 }

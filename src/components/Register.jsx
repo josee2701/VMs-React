@@ -2,23 +2,25 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
 
-export default function Login() {
+export default function Register() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rol, setRol] = useState('cliente');
   const navigate = useNavigate();
 
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      const response = await api.post('/login', { email, password });
-      console.log('Respuesta de la API:', response.data);
-      // guarda tu token aquí si lo necesitas
-      // por ejemplo: localStorage.setItem('token', response.data.token);
-      // luego redirige a la página principal de tu app:
-      // navigate('/dashboard');
+      await api.post('/users', { name, email, password, rol });
+      alert('Usuario registrado con éxito');
+      navigate('/login', { replace: true });
     } catch (err) {
-      console.error('Error al hacer login:', err.response || err);
-      alert('Credenciales incorrectas');
+      console.error('Error al registrar usuario:', err.response || err);
+      alert(
+        err.response?.data?.message ||
+        'Ocurrió un error al registrar. Intenta de nuevo.'
+      );
     }
   };
 
@@ -32,7 +34,23 @@ export default function Login() {
         borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         fontSize: '1.1rem'
       }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Login</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          Registrar usuario
+        </h2>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '.5rem' }}>
+            Nombre completo
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Tu nombre"
+            required
+            style={{ width: '100%', padding: '.5rem', fontSize: '1rem' }}
+          />
+        </div>
 
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', marginBottom: '.5rem' }}>Email</label>
@@ -47,7 +65,9 @@ export default function Login() {
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '.5rem' }}>Contraseña</label>
+          <label style={{ display: 'block', marginBottom: '.5rem' }}>
+            Contraseña
+          </label>
           <input
             type="password"
             value={password}
@@ -58,24 +78,36 @@ export default function Login() {
           />
         </div>
 
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', marginBottom: '.5rem' }}>Rol</label>
+          <select
+            value={rol}
+            onChange={e => setRol(e.target.value)}
+            style={{ width: '100%', padding: '.5rem', fontSize: '1rem' }}
+          >
+            <option value="cliente">Cliente</option>
+            <option value="administrador">Administrador</option>
+          </select>
+        </div>
+
         <button type="submit" style={{
           width: '100%', padding: '.75rem', fontSize: '1rem',
           cursor: 'pointer', backgroundColor: '#007BFF',
           color: '#fff', border: 'none', borderRadius: '4px'
         }}>
-          Enviar
+          Crear cuenta
         </button>
 
         <button
           type="button"
-          onClick={() => navigate('/register')}
+          onClick={() => navigate('/login')}
           style={{
             width: '100%', padding: '.75rem', fontSize: '1rem',
             marginTop: '.75rem', background: 'transparent',
             border: 'none', color: '#007BFF', cursor: 'pointer'
           }}
         >
-          Registrar usuario
+          Volver al login
         </button>
       </form>
     </div>
