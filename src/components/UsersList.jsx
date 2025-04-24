@@ -1,14 +1,18 @@
 // src/components/UsersList.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
+import { WSContext } from '../services/wsContext';
 import { parseJwt } from '../utils/jwt';
 
 export default function UsersList() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState(null);
-  const navigate = useNavigate();
+  const [users, setUsers]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+  const navigate                = useNavigate();
+
+  // **WebSocket**
+  const { lastUserEvent } = useContext(WSContext);
 
   // Decodifica el token y extrae el rol
   const token   = localStorage.getItem('jwt') || '';
@@ -20,6 +24,7 @@ export default function UsersList() {
     if (!window.confirm(`¿Eliminar usuario #${id}?`)) return;
     try {
       await api.delete(`/users/${id}`);
+      // opcional: también puedes enviar un event de WS si quieres notificar al resto
       setUsers(prev => prev.filter(u => u.id !== id));
       alert('Usuario eliminado');
     } catch (err) {
@@ -28,6 +33,7 @@ export default function UsersList() {
     }
   };
 
+  // 1) Carga inicial REST
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -46,6 +52,34 @@ export default function UsersList() {
     };
     fetchUsers();
   }, [navigate]);
+
+  // 2) Suscríbete a los eventos de WS
+  useEffect(() => {
+    if (!lastUserEvent) return;
+
+    switch (lastUserEvent.event) {
+      case 'user_created':
+        setUsers(prev => [...prev, lastUserEvent.user]);
+        break;
+
+      case 'user_updated':
+        setUsers(prev =>
+          prev.map(u =>
+            u.id === lastUserEvent.user.id ? lastUserEvent.user : u
+          )
+        );
+        break;
+
+      case 'user_deleted':
+        setUsers(prev =>
+          prev.filter(u => u.id !== lastUserEvent.user.id)
+        );
+        break;
+
+      default:
+        break;
+    }
+  }, [lastUserEvent]);
 
   if (loading) return <p>Cargando usuarios…</p>;
   if (error)   return <p>Error: {error}</p>;

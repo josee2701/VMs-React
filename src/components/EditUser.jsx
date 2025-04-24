@@ -57,7 +57,7 @@ export default function EditUser() {
     try {
       const resp = await api.put(`/users/${id}`, payload);
       if (resp.status === 200) {
-        alert('✅ Usuario actualizado con éxito');
+        alert('Usuario actualizado con éxito');
         navigate('/users', { replace: true });
       } else {
         alert(`Recibí status ${resp.status} al actualizar.`);
@@ -66,7 +66,7 @@ export default function EditUser() {
       console.error('Error al actualizar usuario:', err.response || err);
       alert(
         err.response?.data?.message ||
-        '❌ Ocurrió un error al actualizar el usuario.'
+        ' Ocurrió un error al actualizar el usuario.'
       );
     } finally {
       setSubmitting(false);
@@ -128,19 +128,6 @@ export default function EditUser() {
             placeholder="••••••••"
             style={{ width: '100%', padding: '.5rem' }}
           />
-        </div>
-
-        {/* Rol */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', marginBottom: '.5rem' }}>Rol</label>
-          <select
-            value={rol}
-            onChange={e => setRol(e.target.value)}
-            style={{ width: '100%', padding: '.5rem' }}
-          >
-            <option value="cliente">Cliente</option>
-            <option value="administrador">Administrador</option>
-          </select>
         </div>
 
         <button

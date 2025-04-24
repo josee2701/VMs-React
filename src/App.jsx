@@ -5,6 +5,9 @@ import {
   BrowserRouter as Router,
   Routes
 } from 'react-router-dom';
+
+import { WSProvider } from './services/WSProvider';
+
 import CreateVm from './components/CreateVm';
 import EditUser from './components/EditUser';
 import EditVm from './components/EditVm';
@@ -14,30 +17,30 @@ import Register from './components/Register';
 import UsersList from './components/UsersList';
 import ViewVm from './components/ViewVms';
 
-
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Define /login y /register */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/vms"      element={<VmsList />} />
-        <Route path="/vms/create" element={<CreateVm />} />
-        <Route path="/vms/:id/edit" element={<EditVm />} />
-        <Route path="/vms/:id"           element={<ViewVm />} />
+    <WSProvider>
+      <Router>
+        <Routes>
+          {/* Autenticación */}
+          <Route path="/login"    element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* Define /users */}
-        <Route path="/users" element={<UsersList />} />
-        <Route path="/users/:id/edit" element={<EditUser />} />
+          {/* VMs */}
+          <Route path="/vms"           element={<VmsList />} />
+          <Route path="/vms/create"    element={<CreateVm />} />
+          <Route path="/vms/:id"       element={<ViewVm />} />
+          <Route path="/vms/:id/edit"  element={<EditVm />} />
 
+          {/* Usuarios */}
+          <Route path="/users"        element={<UsersList />} />
+          <Route path="/users/:id/edit" element={<EditUser />} />
 
-        {/* Redirige la raíz al login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
-        {/* Cualquier otra, también a login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
+          {/* Redirecciones */}
+          <Route path="/"  element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </WSProvider>
   );
 }
