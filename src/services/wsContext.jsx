@@ -1,6 +1,9 @@
+// src/services/wsContext.jsx
 import { createContext } from 'react';
 
 export const WSContext = createContext({
-  lastEvent: null,
-  sendMessage: () => {},
+  lastUserEvent: null,
+  lastVmEvent:   null,
+  sendUserMessage: () => {},
+  sendVmMessage:   () => {},
 });

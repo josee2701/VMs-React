@@ -12,7 +12,7 @@ export default function UsersList() {
   const navigate                = useNavigate();
 
   // **WebSocket**
-  const { lastEvent } = useContext(WSContext);
+  const { lastUserEvent } = useContext(WSContext);
 
   // Decodifica el token y extrae el rol
   const token   = localStorage.getItem('jwt') || '';
@@ -55,31 +55,31 @@ export default function UsersList() {
 
   // 2) Suscríbete a los eventos de WS
   useEffect(() => {
-    if (!lastEvent) return;
+    if (!lastUserEvent) return;
 
-    switch (lastEvent.event) {
+    switch (lastUserEvent.event) {
       case 'user_created':
-        setUsers(prev => [...prev, lastEvent.user]);
+        setUsers(prev => [...prev, lastUserEvent.user]);
         break;
 
       case 'user_updated':
         setUsers(prev =>
           prev.map(u =>
-            u.id === lastEvent.user.id ? lastEvent.user : u
+            u.id === lastUserEvent.user.id ? lastUserEvent.user : u
           )
         );
         break;
 
       case 'user_deleted':
         setUsers(prev =>
-          prev.filter(u => u.id !== lastEvent.user.id)
+          prev.filter(u => u.id !== lastUserEvent.user.id)
         );
         break;
 
       default:
         break;
     }
-  }, [lastEvent]);
+  }, [lastUserEvent]);
 
   if (loading) return <p>Cargando usuarios…</p>;
   if (error)   return <p>Error: {error}</p>;

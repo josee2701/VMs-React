@@ -4,16 +4,29 @@ import { useWebSocket } from './useWebSocket';
 import { WSContext } from './wsContext';
 
 export function WSProvider({ children }) {
-  const [lastEvent, setLastEvent] = useState(null);
+  // estado para cada canal
+  const [lastUserEvent, setLastUserEvent] = useState(null);
+  const [lastVmEvent,   setLastVmEvent]   = useState(null);
 
-  // ← Dos args: primero ruta, luego callback
-  const { sendMessage } = useWebSocket(
+  // abre ws://.../ws/users
+  const { sendMessage: sendUserMessage } = useWebSocket(
     '/ws/users',
-    event => setLastEvent(event)
+    event => setLastUserEvent(event)
+  );
+
+  // abre ws://.../ws/vms
+  const { sendMessage: sendVmMessage } = useWebSocket(
+    '/ws/vms',
+    event => setLastVmEvent(event)
   );
 
   return (
-    <WSContext.Provider value={{ lastEvent, sendMessage }}>
+    <WSContext.Provider value={{
+      lastUserEvent,
+      lastVmEvent,
+      sendUserMessage,
+      sendVmMessage
+    }}>
       {children}
     </WSContext.Provider>
   );
