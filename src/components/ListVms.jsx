@@ -1,19 +1,25 @@
 // src/components/VmsList.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
+import { WSContext } from '../services/wsContext';
 import { parseJwt } from '../utils/jwt';
 
 export default function VmsList() {
-  const [vms, setVms]       = useState([]);
+  const [vms, setVms]         = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
-  const navigate = useNavigate();
+  const navigate              = useNavigate();
 
+  // Nuevo: tomo solo el evento de VMs
+  const { lastVmEvent } = useContext(WSContext);
+
+  // JWT → rol
   const token   = localStorage.getItem('jwt') || '';
   const payload = parseJwt(token);
   const rol     = payload.rol || payload.role;
 
+  // Borrar VM
   const handleDelete = async id => {
     if (!window.confirm(`¿Eliminar VM #${id}?`)) return;
     try {
@@ -26,6 +32,7 @@ export default function VmsList() {
     }
   };
 
+  // 1) fetch inicial
   useEffect(() => {
     (async () => {
       try {
@@ -44,6 +51,35 @@ export default function VmsList() {
     })();
   }, [navigate]);
 
+  // 2) hot-reload vía WS
+  useEffect(() => {
+    console.log("🔥 VmsList – lastVmEvent cambió:", lastVmEvent);
+    if (!lastVmEvent) return;
+
+    switch (lastVmEvent.event) {
+      case 'vm_created':
+        setVms(prev => [...prev, lastVmEvent.vm]);
+        break;
+
+      case 'vm_updated':
+        setVms(prev =>
+          prev.map(x =>
+            x.id === lastVmEvent.vm.id ? lastVmEvent.vm : x
+          )
+        );
+        break;
+
+      case 'vm_deleted':
+        setVms(prev =>
+          prev.filter(x => x.id !== lastVmEvent.vm.id)
+        );
+        break;
+
+      default:
+        break;
+    }
+  }, [lastVmEvent]);
+
   if (loading) return <p>Cargando VMs…</p>;
   if (error)   return <p>Error: {error}</p>;
 
@@ -59,14 +95,12 @@ export default function VmsList() {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {rol === 'administrador' && (
             <>
-              <button
-                onClick={() => navigate('/users')}
-                style={btnInfo}
-              >Usuarios</button>
-              <button
-                onClick={() => navigate('/vms/create')}
-                style={btnSuccess}
-              >Crear VM</button>
+              <button onClick={() => navigate('/users')} style={btnInfo}>
+                Usuarios
+              </button>
+              <button onClick={() => navigate('/vms/create')} style={btnSuccess}>
+                Crear VM
+              </button>
             </>
           )}
         </div>
@@ -88,13 +122,10 @@ export default function VmsList() {
               <td style={td}>{vm.name}</td>
               <td style={td}>{vm.status}</td>
               <td style={td}>
-                {/* Ver: disponible para todos */}
                 <button
                   onClick={() => navigate(`/vms/${vm.id}`)}
                   style={btnPrimary}
                 >Ver</button>
-
-                {/* Solo admin: Editar / Eliminar */}
                 {rol === 'administrador' && (
                   <>
                     <button
