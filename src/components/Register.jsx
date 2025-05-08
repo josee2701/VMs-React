@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
 
 export default function Register() {
-  const [name, setName] = useState('');
+  const [first_name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rol, setRol] = useState('cliente');
+  const [groups, setRol] = useState(['Visit']);
   const navigate = useNavigate();
 
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await api.post('/users', { name, email, password, rol });
+      await api.post('/api/users/', { first_name, email, password, groups });
       alert('Usuario registrado con éxito');
       navigate('/login', { replace: true });
     } catch (err) {
@@ -44,7 +44,7 @@ export default function Register() {
           </label>
           <input
             type="text"
-            value={name}
+            value={first_name}
             onChange={e => setName(e.target.value)}
             placeholder="Tu nombre"
             required
@@ -81,12 +81,12 @@ export default function Register() {
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', marginBottom: '.5rem' }}>Rol</label>
           <select
-            value={rol}
-            onChange={e => setRol(e.target.value)}
+            value={groups[0]}
+            onChange={e => setRol([e.target.value])}
             style={{ width: '100%', padding: '.5rem', fontSize: '1rem' }}
           >
-            <option value="cliente">Cliente</option>
-            <option value="administrador">Administrador</option>
+            <option value="Visit">Externo</option>
+            <option value="Admin">Administrador</option>
           </select>
         </div>
 

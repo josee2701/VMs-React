@@ -1,11 +1,11 @@
 import axios from 'axios';
-//const baseUrl = 'http://localhost:8000'; //Development URL
-const baseUrl = 'https://vms-5saw.onrender.com/'; //Production URL
+const baseUrl = 'http://localhost:9000'; //Development URL
+// const baseUrl = 'https://vms-5saw.onrender.com/'; //Production URL
 const api = axios.create({ baseURL: baseUrl });
 
 // Antes de cada petición, inyecta el Authorization si hay token
 api.interceptors.request.use(config => {
-    const token = localStorage.getItem('jwt');
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
