@@ -1,4 +1,6 @@
 // src/components/StockList.jsx
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
@@ -6,11 +8,14 @@ import { parseJwt } from '../utils/jwt.jsx';
 import ConfirmModal from './ConfirmModal';
 
 export default function StockList() {
-  const [stock, setStock]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+  const [stock, setStock]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
   const [toDeleteId, setToDeleteId] = useState(null);
-  const navigate                = useNavigate();
+  const [toSendPdf, setToSendPdf]   = useState(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [subjectInput, setSubjectInput] = useState('');
+  const navigate                    = useNavigate();
 
   // 0️⃣ Token y permiso
   const token   = localStorage.getItem('token');
@@ -30,7 +35,9 @@ export default function StockList() {
         if (err.response?.status === 401) {
           localStorage.clear();
           navigate('/login', { replace: true });
-        } else setError(err.message);
+        } else {
+          setError(err.message);
+        }
       })
       .finally(() => setLoading(false));
   }, [token, navigate]);
@@ -41,7 +48,7 @@ export default function StockList() {
   // Confirmar borrado
   const handleConfirmDelete = async () => {
     try {
-      await api.delete(`/api/stock/${toDeleteId}/`);
+      await api.delete(`/api/stocks/${toDeleteId}/`);
       setStock(prev => prev.filter(item => item.id !== toDeleteId));
       alert(`Stock #${toDeleteId} eliminado`);
     } catch (err) {
@@ -52,6 +59,27 @@ export default function StockList() {
     }
   };
 
+  // Generar y descargar PDF del listado
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const tableColumn = ['ID', 'Producto', 'Cantidad', 'Fecha'];
+    const tableRows = stock.map(item => [
+      item.id,
+      item.product_detail?.name || item.product,
+      item.quantity,
+      item.date
+    ]);
+
+    doc.text('Listado de Stock', 14, 15);
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+      theme: 'grid'
+    });
+    doc.save('stock_list.pdf');
+  };
+
   if (loading) return <p>Cargando stock…</p>;
   if (error)   return <p>Error: {error}</p>;
 
@@ -60,7 +88,7 @@ export default function StockList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Listado de Stock</h2>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={() => navigate('/productos')} style={btnInfo}>
+          <button onClick={() => navigate('/products')} style={btnInfo}>
             Productos
           </button>
           <button onClick={() => navigate('/companies')} style={btnInfo}>
@@ -71,6 +99,12 @@ export default function StockList() {
               Crear Stock
             </button>
           )}
+          <button onClick={generatePDF} style={btnInfo}>
+            Descargar PDF
+          </button>
+          <button onClick={() => navigate('/stock/send-pdf')} style={btnSuccess}>
+            Enviar PDF por correo
+          </button>
         </div>
       </div>
 
@@ -99,7 +133,7 @@ export default function StockList() {
               {isAdmin && (
                 <td style={td}>
                   <button
-                    onClick={() => navigate(`/stock/edit/${item.id}`)}
+                    onClick={() => navigate(`/stock/${item.id}/edit`)}
                     style={btnPrimary}
                   >
                     Editar

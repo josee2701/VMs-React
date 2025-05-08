@@ -19,6 +19,7 @@ import CompaniesList from './components/ListCompanies';
 import ProductsList from './components/ListProduct';
 import Login from './components/Login';
 import Register from './components/Register';
+import SendPdfForm from './components/SendPdfForm';
 import StockList from './components/StockList';
 import UsersList from './components/UsersList';
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/stock" element={<StockList />} />
           <Route path="/stock/create" element={<CreateStock />} />
           <Route path="/stock/edit/:id" element={<EditStock />} />
+          <Route path="/stock/send-pdf" element={<SendPdfForm />} />
 
 
 
