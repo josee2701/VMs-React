@@ -10,7 +10,7 @@ export default function Login() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      const response = await api.post('/login', { email, password });
+      const response = await api.post('/api/login/', { email, password });
       console.log('Respuesta de la API:', response.data);
       // 1 Extrae y guarda el JWT en localStorage
       const { access_token } = response.data;
