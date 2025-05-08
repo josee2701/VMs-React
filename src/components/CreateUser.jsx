@@ -1,23 +1,19 @@
-// src/components/EditUser.jsx
+// src/components/CreateUser.jsx
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
 import { parseJwt } from '../utils/jwt.jsx';
 
-export default function EditUser() {
-  const { id } = useParams();
+export default function CreateUser() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName]   = useState('');
+  const [email, setEmail]         = useState('');
+  const [password, setPassword]   = useState('');
+  const [groups, setGroups]       = useState(['Visit']);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // Estado para cada campo
-  const [firstName, setFirstName] = useState('');
-  const [lastName,  setLastName]  = useState('');
-  const [email,     setEmail]     = useState('');
-  const [groups,    setGroups]    = useState(['Visit']);
-  const [password,  setPassword]  = useState('');
-  const [loading,   setLoading]   = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-
-  // 🔒 Guardia de rol: solo admin puede entrar
+  // 🔒 Sólo administradores pueden crear usuarios
   useEffect(() => {
     const token   = localStorage.getItem('token') || '';
     const payload = parseJwt(token);
@@ -28,57 +24,33 @@ export default function EditUser() {
     }
   }, [navigate]);
 
-  // ⚙️ Cargar datos del usuario al montar
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data } = await api.get(`/api/users/${id}/`);
-        // Rellenar estado con lo recibido
-        setFirstName(data.first_name || '');
-        setLastName(data.last_name   || '');
-        setEmail(data.email          || '');
-        setGroups(data.groups        || ['Visit']);
-      } catch (err) {
-        console.error('Error al cargar usuario:', err.response || err);
-        alert('No se pudo cargar el usuario. Volviendo...');
-        navigate('/users', { replace: true });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, [id, navigate]);
-
   const handleSubmit = async e => {
     e.preventDefault();
     setSubmitting(true);
-
-    // Payload igual a Register
-    const payload = {
-      first_name: firstName,
-      last_name:  lastName,
-      email,
-      groups,
-    };
-    if (password.trim()) {
-      payload.password = password;
-    }
-
     try {
-      await api.put(`/api/users/${id}/`, payload);
-      alert('Usuario actualizado con éxito');
-      navigate('/users', { replace: true });
+      const response = await api.post('/api/users/', {
+        first_name: firstName,
+        last_name:  lastName,
+        email,
+        password,
+        groups
+      });
+      if (response.status === 201 || response.status === 200) {
+        alert('✅ Usuario creado con éxito');
+        navigate('/users', { replace: true });
+      } else {
+        alert(`Creado, pero recibí status ${response.status}`);
+      }
     } catch (err) {
-      console.error('Error al actualizar:', err.response || err);
-      alert(err.response?.data?.message || 'Error al actualizar el usuario.');
+      console.error('Error al crear usuario:', err.response || err);
+      alert(
+        err.response?.data?.message ||
+        '❌ Ocurrió un error al crear el usuario. Intenta de nuevo.'
+      );
     } finally {
       setSubmitting(false);
     }
   };
-
-  if (loading) {
-    return <p style={{ padding: '1rem' }}>Cargando datos del usuario…</p>;
-  }
 
   return (
     <div style={{
@@ -91,7 +63,7 @@ export default function EditUser() {
         fontSize: '1rem'
       }}>
         <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          Editar Usuario #{id}
+          Crear nuevo Usuario
         </h2>
 
         {/* Nombre */}
@@ -132,16 +104,14 @@ export default function EditUser() {
           />
         </div>
 
-        {/* Contraseña opcional */}
+        {/* Contraseña */}
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '.5rem' }}>
-            Contraseña (deja vacío para no cambiar)
-          </label>
+          <label style={{ display: 'block', marginBottom: '.5rem' }}>Contraseña</label>
           <input
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
+            required
             style={{ width: '100%', padding: '.5rem' }}
           />
         </div>
@@ -159,7 +129,7 @@ export default function EditUser() {
           </select>
         </div>
 
-        {/* Botones Guardar y Cancelar */}
+        {/* Botones Crear y Cancelar */}
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             type="submit"
@@ -169,13 +139,13 @@ export default function EditUser() {
               padding: '.75rem',
               fontSize: '1rem',
               cursor: submitting ? 'not-allowed' : 'pointer',
-              backgroundColor: '#007BFF',
+              backgroundColor: '#28a745',
               color: '#fff',
               border: 'none',
               borderRadius: '4px'
             }}
           >
-            {submitting ? 'Guardando…' : 'Guardar cambios'}
+            {submitting ? 'Creando…' : 'Crear Usuario'}
           </button>
 
           <button

@@ -3,17 +3,19 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
 import { parseJwt } from '../utils/jwt';
+import ConfirmModal from './ConfirmModal';
 
 export default function UsersList() {
-  const [users, setUsers]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
-  const navigate              = useNavigate();
+  const [users, setUsers]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
+  const [toDeleteId, setToDeleteId] = useState(null);
+  const navigate                    = useNavigate();
 
-  // 0️⃣ Trae y decodifica el token
-  const token = localStorage.getItem('token');
+  // 0️⃣ Token + permisos
+  const token   = localStorage.getItem('token');
   const payload = token ? parseJwt(token) : {};
-  const grupos  = payload.groups || []; 
+  const grupos  = payload.groups || [];
   const isAdmin = grupos.includes('administrador') || grupos.includes('Admin');
 
   // 1️⃣ Fetch inicial
@@ -28,22 +30,27 @@ export default function UsersList() {
         if (err.response?.status === 401) {
           localStorage.clear();
           navigate('/login', { replace: true });
-        } else {
-          setError(err.message);
-        }
+        } else setError(err.message);
       })
       .finally(() => setLoading(false));
   }, [token, navigate]);
 
-  const handleDelete = async id => {
-    if (!window.confirm(`¿Eliminar usuario #${id}?`)) return;
+  // ✋ Único responsable de abrir el modal
+  const openDeleteModal = id => {
+    setToDeleteId(id);
+  };
+
+  // ✅ Ejecuta el DELETE y cierra modal
+  const handleConfirmDelete = async () => {
     try {
-      await api.delete(`/api/users/${id}/`);
-      setUsers(prev => prev.filter(u => u.id !== id));
+      await api.delete(`/api/users/${toDeleteId}/`);
+      setUsers(prev => prev.filter(u => u.id !== toDeleteId));
       alert('Usuario eliminado');
     } catch (err) {
       console.error(err);
       alert(err.response?.data || 'Error al eliminar');
+    } finally {
+      setToDeleteId(null);
     }
   };
 
@@ -68,7 +75,7 @@ export default function UsersList() {
           </button>
           {isAdmin && (
             <button
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/users/create')}
               style={btnSuccess}
             >
               Crear Usuario
@@ -99,14 +106,15 @@ export default function UsersList() {
                 {isAdmin && (
                   <td style={td}>
                     <button
-                      onClick={() => navigate(`/users/${u.id}/edit`)}
+                      onClick={() => navigate(`/users/edit/${u.id}`)}
                       style={btnPrimary}
                     >
                       Editar
                     </button>
-                    <button onClick={() => handleDelete(u.id)}
+                    <button
+                      onClick={() => openDeleteModal(u.id)}
                       style={{ ...btnDanger, marginLeft: '0.5rem' }}
-                      >
+                    >
                       Eliminar
                     </button>
                   </td>
@@ -116,10 +124,20 @@ export default function UsersList() {
           })}
         </tbody>
       </table>
+
+      {/* Modal de confirmación */}
+      <ConfirmModal
+        isOpen={toDeleteId !== null}
+        title="¿Eliminar usuario?"
+        message={`¿Seguro que quieres borrar al usuario #${toDeleteId}?`}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setToDeleteId(null)}
+      />
     </div>
   );
 }
 
+// ↓ estilos (igual que antes)
 const th = {
   border: '1px solid #ddd',
   padding: '8px',

@@ -3,14 +3,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
 import { parseJwt } from '../utils/jwt.jsx';
+import ConfirmModal from './ConfirmModal';
 
 export default function CompaniesList() {
-  const [companies, setCompanies] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
-  const navigate                  = useNavigate();
+  const [companies, setCompanies]   = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
+  const [toDeleteNit, setToDeleteNit] = useState(null);
+  const navigate                    = useNavigate();
 
-  // 0️⃣ Recuperamos y decodificamos el token
+  // 0️⃣ Token y roles
   const token   = localStorage.getItem('token');
   const payload = token ? parseJwt(token) : {};
   const groups  = payload.groups || [];
@@ -35,16 +37,22 @@ export default function CompaniesList() {
       .finally(() => setLoading(false));
   }, [token, navigate]);
 
-  // 2️⃣ Eliminar compañía
-  const handleDelete = async nit => {
-    if (!window.confirm(`¿Eliminar compañía con NIT ${nit}?`)) return;
+  // 👉 Abre el modal de confirmación
+  const openDeleteModal = nit => {
+    setToDeleteNit(nit);
+  };
+
+  // ✅ Confirma y ejecuta el DELETE real
+  const handleConfirmDelete = async () => {
     try {
-      await api.delete(`/api/companies/${nit}/`);
-      setCompanies(prev => prev.filter(c => c.nit !== nit));
-      alert('Compañía eliminada');
+      await api.delete(`/api/companies/${toDeleteNit}/`);
+      setCompanies(prev => prev.filter(c => c.nit !== toDeleteNit));
+      alert(`Compañía ${toDeleteNit} eliminada`);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data || 'Error al eliminar compañía.');
+      alert(err.response?.data || 'Error al eliminar compañía');
+    } finally {
+      setToDeleteNit(null);
     }
   };
 
@@ -98,13 +106,13 @@ export default function CompaniesList() {
               {isAdmin && (
                 <td style={td}>
                   <button
-                    onClick={() => navigate(`/companies/${c.nit}/edit`)}
+                    onClick={() => navigate(`/companies/edit/${c.nit}`)}
                     style={btnPrimary}
                   >
                     Editar
                   </button>
                   <button
-                    onClick={() => handleDelete(c.nit)}
+                    onClick={() => openDeleteModal(c.nit)}
                     style={{ ...btnDanger, marginLeft: '0.5rem' }}
                   >
                     Eliminar
@@ -115,10 +123,20 @@ export default function CompaniesList() {
           ))}
         </tbody>
       </table>
+
+      {/* Modal de confirmación reutilizable */}
+      <ConfirmModal
+        isOpen={toDeleteNit !== null}
+        title="¿Eliminar Compañía?"
+        message={`¿Seguro que quieres borrar la compañía con NIT ${toDeleteNit}?`}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setToDeleteNit(null)}
+      />
     </div>
   );
 }
 
+// — estilos igual que antes —
 const th = {
   border: '1px solid #ddd',
   padding: '8px',
