@@ -1,16 +1,16 @@
-// src/components/ProductsList.jsx
+// src/components/StockList.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
 import { parseJwt } from '../utils/jwt.jsx';
 import ConfirmModal from './ConfirmModal';
 
-export default function ProductsList() {
-  const [products, setProducts]         = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
-  const [toDeleteCod, setToDeleteCod]   = useState(null);
-  const navigate                        = useNavigate();
+export default function StockList() {
+  const [stock, setStock]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+  const [toDeleteId, setToDeleteId] = useState(null);
+  const navigate                = useNavigate();
 
   // 0️⃣ Token y permiso
   const token   = localStorage.getItem('token');
@@ -18,68 +18,57 @@ export default function ProductsList() {
   const groups  = payload.groups || [];
   const isAdmin = groups.includes('Admin') || groups.includes('administrador');
 
-  // 1️⃣ Fetch inicial de productos
+  // 1️⃣ Fetch inicial de stock
   useEffect(() => {
     if (!token) {
       navigate('/login', { replace: true });
       return;
     }
-    api.get('/api/products/')
-      .then(({ data }) => setProducts(data))
+    api.get('/api/stocks/')
+      .then(({ data }) => setStock(data))
       .catch(err => {
         if (err.response?.status === 401) {
           localStorage.clear();
           navigate('/login', { replace: true });
-        } else {
-          setError(err.message);
-        }
+        } else setError(err.message);
       })
       .finally(() => setLoading(false));
   }, [token, navigate]);
 
-  // Abre el modal
-  const openDeleteModal = cod => setToDeleteCod(cod);
+  // Abrir modal de confirmación
+  const openDeleteModal = id => setToDeleteId(id);
 
   // Confirmar borrado
   const handleConfirmDelete = async () => {
     try {
-      await api.delete(`/api/products/${toDeleteCod}/`);
-      setProducts(prev => prev.filter(p => p.cod !== toDeleteCod));
-      alert(`Producto ${toDeleteCod} eliminado`);
+      await api.delete(`/api/stock/${toDeleteId}/`);
+      setStock(prev => prev.filter(item => item.id !== toDeleteId));
+      alert(`Stock #${toDeleteId} eliminado`);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data || 'Error al eliminar producto');
+      alert(err.response?.data || 'Error al eliminar stock');
     } finally {
-      setToDeleteCod(null);
+      setToDeleteId(null);
     }
   };
 
-  if (loading) return <p>Cargando productos…</p>;
+  if (loading) return <p>Cargando stock…</p>;
   if (error)   return <p>Error: {error}</p>;
 
   return (
     <div style={{ padding: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2>Listado de Productos</h2>
+        <h2>Listado de Stock</h2>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            onClick={() => navigate('/companies')}
-            style={btnInfo}
-          >
+          <button onClick={() => navigate('/productos')} style={btnInfo}>
+            Productos
+          </button>
+          <button onClick={() => navigate('/companies')} style={btnInfo}>
             Compañías
           </button>
-          <button
-            onClick={() => navigate('/stock')}
-            style={btnInfo}
-          >
-            Stock
-          </button>
           {isAdmin && (
-            <button
-              onClick={() => navigate('/productos/create')}
-              style={btnSuccess}
-            >
-              Crear Producto
+            <button onClick={() => navigate('/stock/create')} style={btnSuccess}>
+              Crear Stock
             </button>
           )}
         </div>
@@ -88,36 +77,35 @@ export default function ProductsList() {
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th style={th}>Código</th>
-            <th style={th}>Nombre</th>
-            <th style={th}>Características</th>
-            <th style={th}>Precio COP</th>
-            <th style={th}>Precio USD</th>
-            <th style={th}>Compañía</th>
-            <th style={th}>Stock</th>
+            <th style={th}>ID</th>
+            <th style={th}>Producto</th>
+            <th style={th}>Cantidad</th>
+            <th style={th}>Fecha</th>
             {isAdmin && <th style={th}>Acciones</th>}
           </tr>
         </thead>
         <tbody>
-          {products.map(p => (
-            <tr key={p.cod}>
-              <td style={td}>{p.cod}</td>
-              <td style={td}>{p.name}</td>
-              <td style={td}>{p.characteristics}</td>
-              <td style={td}>{p.price_cop}</td>
-              <td style={td}>{p.price_usd}</td>
-              <td style={td}>{p.company_detail?.name || p.company}</td>
-              <td style={td}>{(p.stock || []).map(s => s.quantity).join(', ')}</td>
+          {stock.map(item => (
+            <tr key={item.id}>
+              <td style={td}>{item.id}</td>
+              <td style={td}>
+                {item.product_detail?.name || item.product}
+                <span style={{ marginLeft: '0.5rem', color: '#666' }}>
+                  ({item.product_detail?.cod || item.product})
+                </span>
+              </td>
+              <td style={td}>{item.quantity}</td>
+              <td style={td}>{item.date}</td>
               {isAdmin && (
                 <td style={td}>
                   <button
-                    onClick={() => navigate(`/productos/edit/${p.cod}`)}
+                    onClick={() => navigate(`/stock/edit/${item.id}`)}
                     style={btnPrimary}
                   >
                     Editar
                   </button>
                   <button
-                    onClick={() => openDeleteModal(p.cod)}
+                    onClick={() => openDeleteModal(item.id)}
                     style={{ ...btnDanger, marginLeft: '0.5rem' }}
                   >
                     Eliminar
@@ -130,17 +118,17 @@ export default function ProductsList() {
       </table>
 
       <ConfirmModal
-        isOpen={toDeleteCod !== null}
-        title="¿Eliminar Producto?"
-        message={`¿Seguro que quieres borrar el producto ${toDeleteCod}?`}
+        isOpen={toDeleteId !== null}
+        title="¿Eliminar Stock?"
+        message={`¿Seguro que quieres borrar el stock #${toDeleteId}?`}
         onConfirm={handleConfirmDelete}
-        onCancel={() => setToDeleteCod(null)}
+        onCancel={() => setToDeleteId(null)}
       />
     </div>
   );
 }
 
-// Estilos (puedes extraer a un archivo común)
+// Estilos comunes
 const th = {
   border: '1px solid #ddd',
   padding: '8px',

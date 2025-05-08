@@ -9,14 +9,17 @@ import {
 import CompanyProductsList from './components/CompanyProductsList';
 import CreateCompany from './components/CreateCompanies';
 import CreateProduct from './components/CreateProduct';
+import CreateStock from './components/CreateStock';
 import CreateUser from './components/CreateUser';
 import EditCompany from './components/EditCompanies';
 import EditProduct from './components/EditProduct';
+import EditStock from './components/EditStock';
 import EditUser from './components/EditUser';
 import CompaniesList from './components/ListCompanies';
 import ProductsList from './components/ListProduct';
 import Login from './components/Login';
 import Register from './components/Register';
+import StockList from './components/StockList';
 import UsersList from './components/UsersList';
 export default function App() {
   return (
@@ -42,7 +45,10 @@ export default function App() {
           <Route path="/productos/edit/:cod" element={<EditProduct />} />
 
 
-          
+          <Route path="/stock" element={<StockList />} />
+          <Route path="/stock/create" element={<CreateStock />} />
+          <Route path="/stock/edit/:id" element={<EditStock />} />
+
 
 
           {/* Redirecciones */}
