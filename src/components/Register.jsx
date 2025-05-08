@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
 
@@ -12,7 +12,7 @@ export default function Register() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await api.post('/api/users/', { first_name, email, password, groups });
+      await api.post('api/register/', { first_name, email, password, groups });
       alert('Usuario registrado con éxito');
       navigate('/login', { replace: true });
     } catch (err) {
