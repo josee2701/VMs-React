@@ -37,7 +37,7 @@ export default function CreateStock() {
         quantity: quantity ? parseInt(quantity, 10) : null,
         product: product || null
       };
-      const response = await api.post('/api/stock/', payload);
+      const response = await api.post('/api/stocks/', payload);
       if (response.status === 201 || response.status === 200) {
         alert('✅ Stock creado con éxito');
         navigate('/stock', { replace: true });
