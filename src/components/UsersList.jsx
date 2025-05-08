@@ -1,85 +1,51 @@
 // src/components/UsersList.jsx
-import React, { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
-import { WSContext } from '../services/wsContext';
 import { parseJwt } from '../utils/jwt';
 
 export default function UsersList() {
-  const [users, setUsers]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
-  const navigate                = useNavigate();
+  const [users, setUsers]     = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
+  const navigate              = useNavigate();
 
-  // **WebSocket**
-  const { lastUserEvent } = useContext(WSContext);
+  // 0️⃣ Trae y decodifica el token
+  const token = localStorage.getItem('token');
+  const payload = token ? parseJwt(token) : {};
+  const grupos  = payload.groups || []; 
+  const isAdmin = grupos.includes('administrador') || grupos.includes('Admin');
 
-  // Decodifica el token y extrae el rol
-  const token   = localStorage.getItem('jwt') || '';
-  const payload = parseJwt(token);
-  const rol     = payload.rol || payload.role;
-
-  // Borrar usuario
-  const handleDelete = async id => {
-    if (!window.confirm(`¿Eliminar usuario #${id}?`)) return;
-    try {
-      await api.delete(`/users/${id}`);
-      // opcional: también puedes enviar un event de WS si quieres notificar al resto
-      setUsers(prev => prev.filter(u => u.id !== id));
-      alert('Usuario eliminado');
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || 'Error al eliminar');
-    }
-  };
-
-  // 1) Carga inicial REST
+  // 1️⃣ Fetch inicial
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data } = await api.get('/users');
-        setUsers(data);
-      } catch (err) {
+    if (!token) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    api.get('/api/users/')
+      .then(({ data }) => setUsers(data))
+      .catch(err => {
         if (err.response?.status === 401) {
           localStorage.clear();
           navigate('/login', { replace: true });
         } else {
           setError(err.message);
         }
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsers();
-  }, [navigate]);
+      })
+      .finally(() => setLoading(false));
+  }, [token, navigate]);
 
-  // 2) Suscríbete a los eventos de WS
-  useEffect(() => {
-    if (!lastUserEvent) return;
-
-    switch (lastUserEvent.event) {
-      case 'user_created':
-        setUsers(prev => [...prev, lastUserEvent.user]);
-        break;
-
-      case 'user_updated':
-        setUsers(prev =>
-          prev.map(u =>
-            u.id === lastUserEvent.user.id ? lastUserEvent.user : u
-          )
-        );
-        break;
-
-      case 'user_deleted':
-        setUsers(prev =>
-          prev.filter(u => u.id !== lastUserEvent.user.id)
-        );
-        break;
-
-      default:
-        break;
+  const handleDelete = async id => {
+    if (!window.confirm(`¿Eliminar usuario #${id}?`)) return;
+    try {
+      await api.delete(`/api/users/${id}/`);
+      setUsers(prev => prev.filter(u => u.id !== id));
+      alert('Usuario eliminado');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data || 'Error al eliminar');
     }
-  }, [lastUserEvent]);
+  };
 
   if (loading) return <p>Cargando usuarios…</p>;
   if (error)   return <p>Error: {error}</p>;
@@ -93,7 +59,7 @@ export default function UsersList() {
         marginBottom: '1rem'
       }}>
         <h2>Listado de Usuarios</h2>
-        {rol === 'administrador' && (
+        {isAdmin && (
           <button
             onClick={() => navigate('/register')}
             style={{
@@ -116,35 +82,35 @@ export default function UsersList() {
             <th style={th}>ID</th>
             <th style={th}>Nombre</th>
             <th style={th}>Email</th>
-            <th style={th}>Rol</th>
-            {rol === 'administrador' && <th style={th}>Acciones</th>}
+            <th style={th}>Grupo</th>
+            {isAdmin && <th style={th}>Acciones</th>}
           </tr>
         </thead>
         <tbody>
-          {users.map(u => (
-            <tr key={u.id}>
-              <td style={td}>{u.id}</td>
-              <td style={td}>{u.name}</td>
-              <td style={td}>{u.email}</td>
-              <td style={td}>{u.rol || u.role}</td>
-              {rol === 'administrador' && (
-                <td style={td}>
-                  <button
-                    onClick={() => navigate(`/users/${u.id}/edit`)}
-                    style={{ marginRight: '0.5rem' }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(u.id)}
-                    style={{ color: '#dc3545' }}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              )}
-            </tr>
-          ))}
+          {users.map(u => {
+            const nombres = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+            return (
+              <tr key={u.id}>
+                <td style={td}>{u.id}</td>
+                <td style={td}>{nombres || '-'}</td>
+                <td style={td}>{u.email}</td>
+                <td style={td}>{(u.groups || []).join(', ')}</td>
+                {isAdmin && (
+                  <td style={td}>
+                    <button
+                      onClick={() => navigate(`/users/${u.id}/edit`)}
+                      style={{ marginRight: '0.5rem' }}
+                    >
+                      Editar
+                    </button>
+                    <button onClick={() => handleDelete(u.id)}>
+                      Eliminar
+                    </button>
+                  </td>
+                )}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Navigate,
   Route,
@@ -9,7 +8,7 @@ import {
 
 import Login from './components/Login';
 import Register from './components/Register';
-
+import UsersList from './components/UsersList';
 export default function App() {
   return (
       <Router>
@@ -17,9 +16,9 @@ export default function App() {
           {/* Autenticación */}
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
-{/* 
-          {/* VMs */}
+          <Route path="/users" element={<UsersList />} />
           
+
 
           {/* Redirecciones */}
           <Route path="/"  element={<Navigate to="/login" replace />} />
