@@ -1,31 +1,31 @@
-// src/components/CompaniesList.jsx
+// src/components/ProductsList.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../apis.jsx';
 import { parseJwt } from '../utils/jwt.jsx';
 import ConfirmModal from './ConfirmModal';
 
-export default function CompaniesList() {
-  const [companies, setCompanies]   = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState(null);
-  const [toDeleteNit, setToDeleteNit] = useState(null);
-  const navigate                    = useNavigate();
+export default function ProductsList() {
+  const [products, setProducts]         = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
+  const [toDeleteCod, setToDeleteCod]   = useState(null);
+  const navigate                        = useNavigate();
 
-  // 0️⃣ Token y roles
+  // 0️⃣ Token y permiso
   const token   = localStorage.getItem('token');
   const payload = token ? parseJwt(token) : {};
   const groups  = payload.groups || [];
-  const isAdmin = groups.includes('administrador') || groups.includes('Admin');
+  const isAdmin = groups.includes('Admin') || groups.includes('administrador');
 
-  // 1️⃣ Fetch inicial de compañías
+  // 1️⃣ Fetch inicial de productos
   useEffect(() => {
     if (!token) {
       navigate('/login', { replace: true });
       return;
     }
-    api.get('/api/companies/')
-      .then(({ data }) => setCompanies(data))
+    api.get('/api/products/')
+      .then(({ data }) => setProducts(data))
       .catch(err => {
         if (err.response?.status === 401) {
           localStorage.clear();
@@ -37,56 +37,43 @@ export default function CompaniesList() {
       .finally(() => setLoading(false));
   }, [token, navigate]);
 
-  // 👉 Abre el modal de confirmación
-  const openDeleteModal = nit => {
-    setToDeleteNit(nit);
-  };
+  // Abre el modal
+  const openDeleteModal = cod => setToDeleteCod(cod);
 
-  // ✅ Confirma y ejecuta el DELETE real
+  // Confirmar borrado
   const handleConfirmDelete = async () => {
     try {
-      await api.delete(`/api/companies/${toDeleteNit}/`);
-      setCompanies(prev => prev.filter(c => c.nit !== toDeleteNit));
-      alert(`Compañía ${toDeleteNit} eliminada`);
+      await api.delete(`/api/products/${toDeleteCod}/`);
+      setProducts(prev => prev.filter(p => p.cod !== toDeleteCod));
+      alert(`Producto ${toDeleteCod} eliminado`);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data || 'Error al eliminar compañía');
+      alert(err.response?.data || 'Error al eliminar producto');
     } finally {
-      setToDeleteNit(null);
+      setToDeleteCod(null);
     }
   };
 
-  if (loading) return <p>Cargando compañías…</p>;
+  if (loading) return <p>Cargando productos…</p>;
   if (error)   return <p>Error: {error}</p>;
 
   return (
     <div style={{ padding: '1rem' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '1rem'
-      }}>
-        <h2>Listado de Compañías</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2>Listado de Productos</h2>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            onClick={() => navigate('/users')}
+            onClick={() => navigate('/companies')}
             style={btnInfo}
           >
-            Usuarios
+            Compañías
           </button>
-          <button
-              onClick={() => navigate('/productos')}
-              style={btnInfo}
-            >
-              Todos los productos
-            </button>
           {isAdmin && (
             <button
-              onClick={() => navigate('/companies/create')}
+              onClick={() => navigate('/productos/create')}
               style={btnSuccess}
             >
-              Crear Compañía
+              Crear Producto
             </button>
           )}
         </div>
@@ -95,39 +82,39 @@ export default function CompaniesList() {
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th style={th}>NIT</th>
+            <th style={th}>Código</th>
             <th style={th}>Nombre</th>
-            <th style={th}>Dirección</th>
-            <th style={th}>Teléfono</th>
+            <th style={th}>Características</th>
+            <th style={th}>Precio COP</th>
+            <th style={th}>Precio USD</th>
+            <th style={th}>Compañía</th>
+            <th style={th}>Stock</th>
             {isAdmin && <th style={th}>Acciones</th>}
           </tr>
         </thead>
         <tbody>
-          {companies.map(c => (
-            <tr key={c.nit}>
-              <td style={td}>{c.nit}</td>
-              <td style={td}>{c.name}</td>
-              <td style={td}>{c.address}</td>
-              <td style={td}>{c.phone_number}</td>
+          {products.map(p => (
+            <tr key={p.cod}>
+              <td style={td}>{p.cod}</td>
+              <td style={td}>{p.name}</td>
+              <td style={td}>{p.characteristics}</td>
+              <td style={td}>{p.price_cop}</td>
+              <td style={td}>{p.price_usd}</td>
+              <td style={td}>{p.company_detail?.name || p.company}</td>
+              <td style={td}>{(p.stock || []).map(s => s.quantity).join(', ')}</td>
               {isAdmin && (
                 <td style={td}>
                   <button
-                    onClick={() => navigate(`/companies/edit/${c.nit}`)}
+                    onClick={() => navigate(`/productos/edit/${p.cod}`)}
                     style={btnPrimary}
                   >
                     Editar
                   </button>
                   <button
-                    onClick={() => openDeleteModal(c.nit)}
+                    onClick={() => openDeleteModal(p.cod)}
                     style={{ ...btnDanger, marginLeft: '0.5rem' }}
                   >
                     Eliminar
-                  </button>
-                  <button
-                    onClick={() => navigate(`/companies/products/${c.nit}`)}
-                    style={btnPrimary}
-                  >
-                    productos
                   </button>
                 </td>
               )}
@@ -136,19 +123,18 @@ export default function CompaniesList() {
         </tbody>
       </table>
 
-      {/* Modal de confirmación reutilizable */}
       <ConfirmModal
-        isOpen={toDeleteNit !== null}
-        title="¿Eliminar Compañía?"
-        message={`¿Seguro que quieres borrar la compañía con NIT ${toDeleteNit}?`}
+        isOpen={toDeleteCod !== null}
+        title="¿Eliminar Producto?"
+        message={`¿Seguro que quieres borrar el producto ${toDeleteCod}?`}
         onConfirm={handleConfirmDelete}
-        onCancel={() => setToDeleteNit(null)}
+        onCancel={() => setToDeleteCod(null)}
       />
     </div>
   );
 }
 
-// — estilos igual que antes —
+// Estilos (puedes extraer a un archivo común)
 const th = {
   border: '1px solid #ddd',
   padding: '8px',
