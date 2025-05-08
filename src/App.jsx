@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 
 
+import CompaniesList from './components/ListCompanies';
 import Login from './components/Login';
 import Register from './components/Register';
 import UsersList from './components/UsersList';
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/users" element={<UsersList />} />
+          <Route path="/companies" element={<CompaniesList />} />
           
 
 

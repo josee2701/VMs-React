@@ -59,21 +59,22 @@ export default function UsersList() {
         marginBottom: '1rem'
       }}>
         <h2>Listado de Usuarios</h2>
-        {isAdmin && (
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            onClick={() => navigate('/register')}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#007BFF',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            onClick={() => navigate('/companies')}
+            style={btnInfo}
           >
-            Crear Usuario
+            Empresas
           </button>
-        )}
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/register')}
+              style={btnSuccess}
+            >
+              Crear Usuario
+            </button>
+          )}
+        </div>
       </div>
 
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -99,11 +100,13 @@ export default function UsersList() {
                   <td style={td}>
                     <button
                       onClick={() => navigate(`/users/${u.id}/edit`)}
-                      style={{ marginRight: '0.5rem' }}
+                      style={btnPrimary}
                     >
                       Editar
                     </button>
-                    <button onClick={() => handleDelete(u.id)}>
+                    <button onClick={() => handleDelete(u.id)}
+                      style={{ ...btnDanger, marginLeft: '0.5rem' }}
+                      >
                       Eliminar
                     </button>
                   </td>
@@ -126,4 +129,24 @@ const th = {
 const td = {
   border: '1px solid #ddd',
   padding: '8px'
+};
+const btnPrimary = {
+  padding: '0.25rem 0.5rem',
+  backgroundColor: '#007BFF',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '4px',
+  cursor: 'pointer'
+};
+const btnSuccess = {
+  ...btnPrimary,
+  backgroundColor: '#28a745'
+};
+const btnDanger = {
+  ...btnPrimary,
+  backgroundColor: '#dc3545'
+};
+const btnInfo = {
+  ...btnPrimary,
+  backgroundColor: '#17a2b8'
 };

@@ -26,7 +26,7 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(user));
 
       // 4️⃣ Redirigimos a la lista de usuarios
-      navigate('/users', { replace: true });
+      navigate('/companies', { replace: true });
 
     } catch (err) {
       console.error('Error al hacer login:', err.response || err);
