@@ -23,7 +23,7 @@ export default function CreateProduct() {
     const groups  = payload.groups || [];
     const isAdmin = groups.includes('Admin') || groups.includes('administrador');
     if (!isAdmin) {
-      navigate('/products', { replace: true });
+      navigate('/productos', { replace: true });
     }
   }, [navigate]);
 
@@ -52,7 +52,7 @@ export default function CreateProduct() {
       const response = await api.post('/api/products/', payload);
       if (response.status === 201 || response.status === 200) {
         alert('✅ Producto creado con éxito');
-        navigate('/products', { replace: true });
+        navigate('/productos', { replace: true });
       } else {
         alert(`Creado, pero recibí status ${response.status}`);
       }
