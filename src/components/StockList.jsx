@@ -88,7 +88,7 @@ export default function StockList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Listado de Stock</h2>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={() => navigate('/products')} style={btnInfo}>
+          <button onClick={() => navigate('/productos')} style={btnInfo}>
             Productos
           </button>
           <button onClick={() => navigate('/companies')} style={btnInfo}>
